@@ -1,0 +1,12 @@
+package TEST02;
+import java.util.Scanner;
+//숫자 입력시 1000을 곱해주는 코드
+public class Scannerdemo {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int i = sc.nextInt();
+        System.out.println(i*1000);
+        sc.close();
+    }
+}
