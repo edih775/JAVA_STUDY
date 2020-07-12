@@ -1,0 +1,74 @@
+package chatting;
+
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Enumeration;
+import java.util.Hashtable;
+
+public class ChatServer extends Thread {
+		static Hashtable<String, PrintWriter> map = new Hashtable<String, PrintWriter>();
+		BufferedReader br;
+		String UserId;
+		public ChatServer(String UserId, BufferedReader br) {
+			this.UserId = UserId;
+			this.br = br;
+			
+			sendMessage(UserId + "님이 입장 하였습니다.");
+		}
+		
+		void sendMessage(String line) {
+			// 전달받은 메세지를 모든 소켓에 뿌린다.
+			Enumeration<String> keys = map.keys();
+			while(keys.hasMoreElements()) {
+				String idkey = keys.nextElement();
+				PrintWriter pw = map.get(idkey);
+				pw.println(line);
+				pw.flush();
+			}
+		}
+		
+		@Override
+		public void run() {
+			while(true) {
+				try {
+					String line = br.readLine();
+					sendMessage(line);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		public static void main(String[] args) {
+		// 서버 소켓 --> accept -> (클라이언트) 소켓
+		BufferedReader br = null;
+		ServerSocket severSocket = null;
+		try {
+			severSocket = new ServerSocket(9990);
+			System.out.println("클라이언트 연결 대기중...");
+			while(true) {
+				Socket socket = severSocket.accept();
+				System.out.println("클라이언트 연결됨!");
+				// 클라이언트로 부터 메세지 받기 
+				br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				String UserId = br.readLine();
+				//System.out.println(UserId + "님이 접속 됨.");
+				PrintWriter pw = new PrintWriter(new BufferedOutputStream(socket.getOutputStream()));
+				
+				map.put(UserId, pw);
+				
+				//브로드 케스트 준비
+				ChatServer server = new ChatServer(UserId, br);
+				server.start();
+			}
+		} catch (IOException e) {
+			System.out.println("채팅 중 오류 발생!");
+		}
+		
+	}
+}
